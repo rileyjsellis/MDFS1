@@ -1,0 +1,18 @@
+#include <Wire.h> 
+
+#define i2c_address 8
+byte i2c_array[4]= {12, 34, 56, 78};
+
+void setup() {
+  // Start the I2C Bus as Master
+  Serial.begin(9600);
+  Wire.begin(); 
+}
+
+void loop() {
+
+  //-----------------------------------
+  Wire.beginTransmission(i2c_address); //address is queued for checking if the slave is present
+  Wire.write(i2c_array);
+  Wire.endTransmission(); 
+}
