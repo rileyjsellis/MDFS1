@@ -11,12 +11,16 @@ const byte kWireAddress = 9;
 const byte kWireArrayLength = 3;
 
 //3. timing
-unsigned long us_button_timer = 0; //unsigned long saves us from lossy conversion errors
+unsigned long us_current_time = millis();
+unsigned long us_time_since_last_send = 0;
+unsigned long us_last_debounce_time = 0;
 
-//4. joy and states inputs
+//4. joystick and btn inputs
 byte i_joy_x = 0;
 byte i_joy_y = 0;
 byte by_state = 0;
+bool b_last_btn = 0;
+bool b_btn_state = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -29,20 +33,34 @@ void setup() {
 
 
 void readInputs(){
-  i_joy_x = byte(analogRead(map(kJoyXPin,1,1024,1,255))); //reducing to send.
+  i_joy_x = byte(analogRead(map(kJoyXPin,1,1024,1,255)));
   i_joy_y = byte(analogRead(map(kJoyYPin,1,1024,1,255)));
   Serial.print(digitalRead(kJoyBtnPin));
 }
 
-void stateChangeDebounce(){
-  const int i_delay = 1000;
+void readButton(){
+  const byte kDebounceDelay = 50;
+  int reading = digitalRead(kJoyBtnPin);
 
-  if (digitalRead(kJoyBtnPin) == LOW && millis() - us_button_timer > i_delay) {
-    by_state++;
-    us_button_timer = millis();
-    if (by_state == kWireArrayLength) {
-      by_state = 0;
+  if (reading != b_last_btn){
+    us_last_debounce_time = us_current_time;
+  }
+
+  if ((us_current_time - us_last_debounce_time) > kDebounceDelay){
+    if (reading != b_btn_state){
+      b_btn_state = reading;
+      if (b_btn_state == LOW){
+        by_state++;
+        keepStateWitihinRange();
+      }
     }
+  }
+  b_last_btn = reading;
+}
+
+void keepStateWitihinRange(){
+  if (by_state == kWireArrayLength) {
+    by_state = 0;
   }
 }
 
@@ -51,25 +69,23 @@ void sendData(){
   data[0] = i_joy_x;
   data[1] = i_joy_y;
   data[2] = by_state;     
-  Serial.println(data[2]); //diagnostic println
+  Serial.println(data[2]);
   Wire.beginTransmission(kWireAddress);
   Wire.write(data, kWireArrayLength);
   Wire.endTransmission();
 }
 
-void sendInputsData(){
-  unsigned long us_current_time = millis();
-  unsigned long us_time_since_last_send;
-  int sending_interval = 300;
-
-  if (us_current_time - us_time_since_last_send > sending_interval){
+void collectAndSendData(){
+  const int kSendingInterval = 300;
+  if (us_current_time - us_time_since_last_send > kSendingInterval){
     readInputs();
-    stateChangeDebounce();
     sendData();
     us_time_since_last_send = us_current_time;
   }
 }
 
 void loop() {
-  sendInputsData();
+  us_current_time = millis();
+  readButton();
+  collectAndSendData();
 }
