@@ -11,7 +11,7 @@ const byte kWireAddress = 9;
 const byte kWireArrayLength = 3;
 
 //3. timing
-unsigned long us_current_time = millis();
+unsigned long us_current_time;
 unsigned long us_time_since_last_send = 0;
 unsigned long us_last_debounce_time = 0;
 
