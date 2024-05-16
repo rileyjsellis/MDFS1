@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+
 //1. pin assignments
 const byte kEnPin = 8;
 const byte kStepXPin = 2;

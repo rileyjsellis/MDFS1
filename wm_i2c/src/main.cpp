@@ -1,4 +1,4 @@
-#include<Arduino.h>
+#include <Arduino.h>
 #include <Wire.h>
 
 //1. pin assignment
