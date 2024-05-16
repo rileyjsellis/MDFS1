@@ -1,3 +1,4 @@
+#include<Arduino.h>
 #include <Wire.h>
 
 //1. pin assignment
@@ -26,25 +27,10 @@ void setup() {
   digitalWrite(kJoyBtnPin, HIGH);
 }
 
-void loop() {
-    sendInputsData();
-}
-
-void sendInputsData(){
-    unsigned long us_current_time = millis();
-    unsigned long us_time_since_last_send;
-
-    if (us_current_time - us_time_since_last_send > 300){
-        readInputs();
-        stateChangeDebounce();
-        sendData();
-        us_time_since_last_send = us_current_time;
-    }
-}
 
 void readInputs(){
-    joyX = analogRead(map(kJoyXPin,1,1024,1,255)); //reducing to send.
-    joyY = analogRead(map(kJoyYPin,1,1024,1,255));
+    i_joy_x = byte(analogRead(map(kJoyXPin,1,1024,1,255))); //reducing to send.
+    i_joy_y = byte(analogRead(map(kJoyYPin,1,1024,1,255)));
     Serial.print(digitalRead(kJoyBtnPin));
 }
 
@@ -65,6 +51,23 @@ void sendData(){
     data[2] = by_state;     
     Serial.println(data[2]); //diagnostic println
     Wire.beginTransmission(kWireAddress);
-    Wire.write(data, kWireArrayLength)
+    Wire.write(data, kWireArrayLength);
     Wire.endTransmission();
+}
+
+void sendInputsData(){
+    unsigned long us_current_time = millis();
+    unsigned long us_time_since_last_send;
+    int sending_interval = 300;
+
+    if (us_current_time - us_time_since_last_send > sending_interval){
+        readInputs();
+        stateChangeDebounce();
+        sendData();
+        us_time_since_last_send = us_current_time;
+    }
+}
+
+void loop() {
+    sendInputsData();
 }
