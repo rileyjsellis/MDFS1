@@ -71,17 +71,6 @@ void setup() {
   Serial.begin(9600);
 }
 
-/*
-Riley's code plan to remove delays from code
-
-we need to reasses what jayden's machine is attempting. 
-we need to recreate it with:
-1. no copy paste, more modular code
-2. millis() rather than delays
-3. add s_RPM
-
-*/
-
 void stepperSelection(){
   byte b_step_selection[] = {kStepXPin, kStepYPin, kStepZPin};
   byte b_dir_selection[] = {kDirXPin, kDirYPin, kDirZPin};
