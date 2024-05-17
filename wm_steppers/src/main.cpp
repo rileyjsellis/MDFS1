@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <ArmStepper.h>
+#include <ArmSteppers.h>
 #include <Claw.h>
 
 
@@ -16,9 +16,11 @@ const byte kClawPin = 7; //change this
 
 Claw claw(kClawPin);
 
+byte allStepperPins[2][2] = {{kStepXPin, kStepYPin},
+                            {kDirXPin, kDirYPin}};
+
 //creating Arm Stepper Objects
-ArmStepper baseArm(kStepXPin, kDirXPin);
-ArmStepper topArm(kStepYPin, kDirYPin);
+ArmSteppers arm(allStepperPins);
 
 //2. i2c wire
 const byte kWireAddress = 9;
@@ -130,6 +132,4 @@ void loop() {
   us_current_time = millis();
   stepperProcess();
 
-  baseArm.moveTo(90);
-  topArm.moveTo(90);
 }
