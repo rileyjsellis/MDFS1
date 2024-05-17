@@ -1,18 +1,28 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <ArmStepper.h>
+#include <Claw.h>
+
 
 //1. pin assignments
 const byte kEnPin = 8;
 const byte kStepXPin = 2;
 const byte kDirXPin = 5;
 const byte kStepYPin = 3;
-const byte kDirYPin = 6; //realistically current design only needs 2 steppers
-const byte kStepZPin = 4;
-const byte kDirZPin = 7; //4 dc wheels mecanum
+const byte kDirYPin = 6;
+
+//servo inputs for the claw. needed here
+const byte kClawPin = 7; //change this
+
+Claw claw(kClawPin);
+
+//creating Arm Stepper Objects
+ArmStepper baseArm(kStepXPin, kDirXPin);
+ArmStepper topArm(kStepYPin, kDirYPin);
 
 //2. i2c wire
 const byte kWireAddress = 9;
-const byte kWireArrayLength = 3; 
+const byte kWireArrayLength = 3;
 
 //3. timing
 unsigned long us_current_time;
@@ -59,40 +69,26 @@ void readData(int num) {
 
 void setup() {
   pinMode(kEnPin, OUTPUT);
-  digitalWrite(kEnPin, LOW); //only one en pin?
-  pinMode(kStepXPin, OUTPUT); //changed to set all steppers up
-  pinMode(kDirXPin, OUTPUT);
-  pinMode(kStepYPin, OUTPUT);
-  pinMode(kDirYPin, OUTPUT);
-  pinMode(kStepZPin, OUTPUT);
-  pinMode(kDirZPin, OUTPUT);
+  digitalWrite(kEnPin, LOW);
   Wire.begin(kWireAddress);
   Wire.onReceive(readData);
   Serial.begin(9600);
 }
 
-void stepperSelection(){
-  byte b_step_selection[] = {kStepXPin, kStepYPin, kStepZPin};
-  byte b_dir_selection[] = {kDirXPin, kDirYPin, kDirZPin};
 
-  i_step_pin = b_step_selection[by_state];
-  i_dir_pin = b_dir_selection[by_state];
-}
+/*
+how best to set up this code so it won't interrupt wheel movement?
 
-void stepperDirection(){
-  const int kJoyBuffer = kJoyNeutral/20; //2.5% buffer,
-  const int kJoyBufferLower = kJoyNeutral - kJoyBuffer;
-  const int kJoyBufferUpper = kJoyNeutral + kJoyBuffer;
+send instructions to move stepper.
+stepper is always 180.
+stepper always wants to work to get back to 180, so changing that value.
 
-  if ((i_stepper_direction > kJoyBufferLower) && (i_stepper_direction < kJoyBufferUpper)){
-    digitalWrite(i_step_pin, LOW);
-    return;
-  }
+stepper next step function
+  if greater than 180, direction is negative and -- one degrees
+  if less thatn 180, direction is positive and ++ one degrees
 
-  bool b_direction_forward = map(i_stepper_direction,1,255,0,1);
-  digitalWrite(i_step_pin, HIGH);
-  digitalWrite(i_dir_pin, b_direction_forward);
-}
+function is constantly called. new values are added all the time, SO it's a counter variable we're playing with.
+*/
 
 void stepperNextStep(){
   if (us_current_time - us_last_stepper_motion >= f_T){
@@ -125,12 +121,15 @@ void readRPM(){
 
 void stepperProcess(){
   //readRPM(); //not quite needed for now
-  stepperSelection(); 
-  stepperDirection(); 
+  //stepperSelection(); 
+  //stepperDirection(); //code has been removed, likely unneeded.
   stepperMoving();
 }
 
 void loop() {
   us_current_time = millis();
   stepperProcess();
+
+  baseArm.moveTo(90);
+  topArm.moveTo(90);
 }

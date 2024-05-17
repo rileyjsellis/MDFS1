@@ -1,21 +1,50 @@
+//code for joystick and for the wheels L298N systems
+
 #include <Arduino.h>
 #include <Wire.h>
+#include <MecanumWheels.h>
 
-//1. pin assignment
+//1. joystick pin assignment
 const byte kJoyXPin = A0;
 const byte kJoyYPin = A1;
 const byte kJoyBtnPin = 12;
 
-//2. i2c wire
+//2. DC pin assignment
+const byte kEnA1 = 2;
+const byte kIn1 = 1;
+const byte kIn2 = 2;
+
+const byte kEnB1 = 5;
+const byte kIn3 = 3;
+const byte kIn4 = 4;
+
+const byte kEnA2 = 6;
+const byte kIn5 = 7;
+const byte kIn6 = 8;
+
+const byte kEnB2 = 9;
+const byte kIn7 = 10;
+const byte kIn8 = 11;
+
+
+byte allPins[3][4]= {{kEnA1, kEnB1, kEnA2, kEnB2},
+                  {kIn1, kIn3, kIn5, kIn7},
+                  {kIn2, kIn4, kIn6, kIn8}};
+
+//creating an object for all dc wheels 
+
+MecanumWheels wheels(allPins);
+
+//3. i2c wire
 const byte kWireAddress = 9;
 const byte kWireArrayLength = 3;
 
-//3. timing
+//4. timing
 unsigned long us_current_time;
 unsigned long us_time_since_last_send = 0;
 unsigned long us_last_debounce_time = 0;
 
-//4. joystick and btn inputs
+//5. joystick and btn inputs
 byte i_joy_x = 0;
 byte i_joy_y = 0;
 byte by_state = 0;
@@ -38,6 +67,13 @@ void readInputs(){
   Serial.print(digitalRead(kJoyBtnPin));
 }
 
+void keepStateWitihinRange(){
+  const byte num_steppers = 2;
+  if (by_state == num_steppers) {
+    by_state = 0;
+  }
+}
+
 void readButton(){
   const byte kDebounceDelay = 50;
   int reading = digitalRead(kJoyBtnPin);
@@ -56,12 +92,6 @@ void readButton(){
     }
   }
   b_last_btn = reading;
-}
-
-void keepStateWitihinRange(){
-  if (by_state == kWireArrayLength) {
-    by_state = 0;
-  }
 }
 
 void sendData(){
@@ -83,6 +113,11 @@ void collectAndSendData(){
     us_time_since_last_send = us_current_time;
   }
 }
+
+//state system will exist here and SEND over to the stepper arduino. This is now the guide
+
+
+//state machine requires 1) actions that play out, 2) duration for each step. //only wheels state machine will occur here, stepper on other arduino.
 
 void loop() {
   us_current_time = millis();
