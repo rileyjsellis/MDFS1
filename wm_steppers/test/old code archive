@@ -1,0 +1,22 @@
+void stepperSelection(){ 
+  byte b_step_selection[] = {kStepXPin, kStepYPin};
+  byte b_dir_selection[] = {kDirXPin, kDirYPin};
+
+  i_step_pin = b_step_selection[by_state];
+  i_dir_pin = b_dir_selection[by_state];
+}
+
+void stepperDirection(){
+  const int kJoyBuffer = kJoyNeutral/20; //2.5% buffer,
+  const int kJoyBufferLower = kJoyNeutral - kJoyBuffer;
+  const int kJoyBufferUpper = kJoyNeutral + kJoyBuffer;
+
+  if ((i_stepper_direction > kJoyBufferLower) && (i_stepper_direction < kJoyBufferUpper)){
+    digitalWrite(i_step_pin, LOW);
+    return;
+  }
+
+  bool b_direction_forward = map(i_stepper_direction,1,255,0,1);
+  digitalWrite(i_step_pin, HIGH);
+  digitalWrite(i_dir_pin, b_direction_forward);
+}
