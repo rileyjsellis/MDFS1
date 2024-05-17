@@ -11,7 +11,8 @@ class ArmStepper {
     byte _pinMotion;
     byte _pinDirection;
 
-    byte _armresting = 200; //use steps rather than angles, convert as they come along.
+    byte _armheading = 0;
+    byte _armcurrent = 0; //starts at 0 degrees
 };
 
 

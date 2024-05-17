@@ -9,9 +9,17 @@ ArmStepper::ArmStepper(byte pinMotion, byte pinDirection) {
 }
 
 void ArmStepper::moveTo(int angle){
+  _armheading = _armheading + angle;
+  if (_armheading > _armcurrent){
+    //void function direction move arm --
+  }
+  if (_armheading < _armcurrent){
+    //void function direction move arm ++
+  }
   
 }
 
 void ArmStepper::moving(){ //constant passive timing arm movement to adjust
-  
+  //add all relevant constants and timing here.
+  //here RPM code will go.
 }
