@@ -1,15 +1,15 @@
-//code for joystick and for the wheels L298N systems
+// code for joystick and for the wheels L298N systems
 
 #include <Arduino.h>
-#include <Wire.h>
 #include <MecanumWheels.h>
+#include <Wire.h>
 
-//1. joystick pin assignment
+// 1. joystick pin assignment
 const byte kJoyXPin = A0;
 const byte kJoyYPin = A1;
 const byte kJoyBtnPin = 12;
 
-//2. DC pin assignment
+// 2. DC pin assignment
 const byte kEnA1 = 2;
 const byte kIn1 = 1;
 const byte kIn2 = 2;
@@ -26,25 +26,24 @@ const byte kEnB2 = 9;
 const byte kIn7 = 10;
 const byte kIn8 = 11;
 
+byte allPins[3][4] = {{kEnA1, kEnB1, kEnA2, kEnB2},
+                      {kIn1, kIn3, kIn5, kIn7},
+                      {kIn2, kIn4, kIn6, kIn8}};
 
-byte allPins[3][4]= {{kEnA1, kEnB1, kEnA2, kEnB2},
-                  {kIn1, kIn3, kIn5, kIn7},
-                  {kIn2, kIn4, kIn6, kIn8}};
-
-//creating an object for all dc wheels 
+// creating an object for all dc wheels
 
 MecanumWheels wheels(allPins);
 
-//3. i2c wire
+// 3. i2c wire
 const byte kWireAddress = 9;
 const byte kWireArrayLength = 3;
 
-//4. timing
+// 4. timing
 unsigned long us_current_time;
 unsigned long us_time_since_last_send = 0;
 unsigned long us_last_debounce_time = 0;
 
-//5. joystick and btn inputs
+// 5. joystick and btn inputs
 byte i_joy_x = 0;
 byte i_joy_y = 0;
 byte by_state = 0;
@@ -60,32 +59,31 @@ void setup() {
   digitalWrite(kJoyBtnPin, HIGH);
 }
 
-
-void readInputs(){
-  i_joy_x = byte(analogRead(map(kJoyXPin,1,1024,1,255)));
-  i_joy_y = byte(analogRead(map(kJoyYPin,1,1024,1,255)));
+void readInputs() {
+  i_joy_x = byte(analogRead(map(kJoyXPin, 1, 1024, 1, 255)));
+  i_joy_y = byte(analogRead(map(kJoyYPin, 1, 1024, 1, 255)));
   Serial.print(digitalRead(kJoyBtnPin));
 }
 
-void keepStateWitihinRange(){
+void keepStateWitihinRange() {
   const byte num_steppers = 2;
   if (by_state == num_steppers) {
     by_state = 0;
   }
 }
 
-void readButton(){
+void readButton() {
   const byte kDebounceDelay = 50;
   int reading = digitalRead(kJoyBtnPin);
 
-  if (reading != b_last_btn){
+  if (reading != b_last_btn) {
     us_last_debounce_time = us_current_time;
   }
 
-  if ((us_current_time - us_last_debounce_time) > kDebounceDelay){
-    if (reading != b_btn_state){
+  if ((us_current_time - us_last_debounce_time) > kDebounceDelay) {
+    if (reading != b_btn_state) {
       b_btn_state = reading;
-      if (b_btn_state == LOW){
+      if (b_btn_state == LOW) {
         by_state++;
         keepStateWitihinRange();
       }
@@ -94,30 +92,31 @@ void readButton(){
   b_last_btn = reading;
 }
 
-void sendData(){
+void sendData() {
   byte data[kWireArrayLength];
   data[0] = i_joy_x;
   data[1] = i_joy_y;
-  data[2] = by_state;     
+  data[2] = by_state;
   Serial.println(data[2]);
   Wire.beginTransmission(kWireAddress);
   Wire.write(data, kWireArrayLength);
   Wire.endTransmission();
 }
 
-void collectAndSendData(){
+void collectAndSendData() {
   const int kSendingInterval = 300;
-  if (us_current_time - us_time_since_last_send > kSendingInterval){
+  if (us_current_time - us_time_since_last_send > kSendingInterval) {
     readInputs();
     sendData();
     us_time_since_last_send = us_current_time;
   }
 }
 
-//state system will exist here and SEND over to the stepper arduino. This is now the guide
+// state system will exist here and SEND over to the stepper arduino. This is
+// now the guide
 
-
-//state machine requires 1) actions that play out, 2) duration for each step. //only wheels state machine will occur here, stepper on other arduino.
+// state machine requires 1) actions that play out, 2) duration for each step.
+// //only wheels state machine will occur here, stepper on other arduino.
 
 void loop() {
   us_current_time = millis();
