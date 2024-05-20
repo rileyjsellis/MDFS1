@@ -7,7 +7,6 @@ Claw::Claw(byte pin) {
 
 }
 
-
 void Claw::open(){
   //servo 90 degrees
 }

@@ -15,10 +15,22 @@ ArmSteppers::ArmSteppers(byte allStepperPins[2][2]) {
   }
 }
 
-void ArmSteppers::moveTo(int topPosition, int lowerPosition){
-  int intendedHeadings[2] = {topPosition, lowerPosition};
+void ArmSteppers::moveTo(int pod_pos[2]){
+  for(int i = 0; i < 2; i++){
+    _pod_pos[i] = pod_pos[i];
+  }
+  _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX; //x val
+  _pod_pos[1] = _pod_pos[0] + _kAddY; //y val
+  _hyp_to_pos = sqrt(_pod_pos[0]*_pod_pos[0]+_pod_pos[1]*_pod_pos[1]); //hypotenuse
+  _theta = atan2(_pod_pos[1],_pod_pos[2]) * 180/3.14; //get angle
+
+  //going to use the hypotenuse to work out the angle for both arms.
+  //going to use the _theta to Add to the position heading for both angles
+  
+  int intendedHeadings[2]; //both stepper angles
+
   for (int i = 0; i < 2; i++){
-    _armheading[i] = _armheading[i] + intendedHeadings[2];
+    _armheading[i] = _armheading[i] + intendedHeadings[i];
   }
 }
 

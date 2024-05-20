@@ -22,6 +22,14 @@ byte allStepperPins[2][2] = {{kStepXPin, kStepYPin},
 //creating Arm Stepper Objects
 ArmSteppers arm(allStepperPins);
 
+//pod positions = {pod_x, pod_y}
+const int kPodNut = 6;
+const int kTree300[] = {200,300};
+const int kTree150[] = {150,150};
+const int kGround300[] = {300, kPodNut};
+const int kGround200[] = {200, kPodNut}; //two of these.
+const int kGround150[] = {150, kPodNut};
+
 //2. i2c wire
 const byte kWireAddress = 9;
 const byte kWireArrayLength = 3;
