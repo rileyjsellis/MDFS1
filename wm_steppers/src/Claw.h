@@ -1,7 +1,14 @@
 #ifndef Claw_h
 #define Claw_h
 #include "Arduino.h"
-//my servo library to make use of?
+
+// Code Overview
+// Claw is a much simpler class than Stepper, relying on myServo.
+// Here there are only two functions, open and closed.
+
+// As the code is ready before the claw. These positions will 
+// come through testing, so making use of constants is the most 
+// reasonable decision.
 
 class Claw {
   public: 

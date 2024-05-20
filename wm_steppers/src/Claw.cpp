@@ -8,9 +8,9 @@ Claw::Claw(byte pin) {
 }
 
 void Claw::open(){
-  //servo 90 degrees
+  //servo to zero
 }
 
 void Claw::close(){
-  
+ //servo to 100
 }

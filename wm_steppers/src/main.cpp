@@ -138,6 +138,7 @@ void stepperProcess(){
 
 void loop() {
   us_current_time = millis();
-  stepperProcess();
+  //state machine checker here
+  arm.moving();
 
 }

@@ -15,32 +15,52 @@ ArmSteppers::ArmSteppers(byte allStepperPins[2][2]) {
   }
 }
 
-void ArmSteppers::moveTo(int pod_pos[2]){
+//This function adjust's the user's desired inputs.
+void ArmSteppers::adjustXYvals(int pod_pos[2]){
   for(int i = 0; i < 2; i++){
     _pod_pos[i] = pod_pos[i];
   }
-  _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX; //x val
-  _pod_pos[1] = _pod_pos[0] + _kAddY; //y val
-  _hyp_to_pos = sqrt(_pod_pos[0]*_pod_pos[0]+_pod_pos[1]*_pod_pos[1]); //hypotenuse
-  _theta = atan2(_pod_pos[1],_pod_pos[2]) * 180/3.14; //get angle
-
-  //going to use the hypotenuse to work out the angle for both arms.
-  //going to use the _theta to Add to the position heading for both angles
-  
-  int intendedHeadings[2]; //both stepper angles
-
-  for (int i = 0; i < 2; i++){
-    _armheading[i] = _armheading[i] + intendedHeadings[i];
-  }
+  _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX; //adding x val to pod distance.
+  _pod_pos[1] = _pod_pos[0] + _kAddY; //adding y to consider claw height and initial stepper height.
 }
 
+//Trig calculations to get the base angle
+float ArmSteppers::getBaseAxisHeading(){
+  _side_c_to_pos = sqrt(_pod_pos[0]*_pod_pos[0]+_pod_pos[1]*_pod_pos[1]); //hypotenuse
+
+  float _theta_b_1 = atan2(_pod_pos[1],_pod_pos[2]) * 180/3.14; //x and y initial
+  float _theta_b_2 = acos((_kArmA^2 + _side_c_to_pos^2 - _kArmB^2)
+                      /  (2 * _kArmA * _side_c_to_pos)); //angle within created triangle
+
+  return (180 - (_theta_b_1 + _theta_b_2)); //180 minus angles
+}
+
+//Trig calculations to get stepper that alters the middle arm node.
+float ArmSteppers::getMiddleAxisHeading(){
+  
+  float _theta_c = acos((_kArmA^2 + _kArmB - _side_c_to_pos^2) 
+                  / (2 * _kArmA * _kArmB));
+
+  return (180 - (_theta_c)); //180 minus angles
+}
+
+//This is the code the user will input for each pod and deposit, giving only x and y.
+void ArmSteppers::moveTo(int pod_pos[2]){ //to apply during state changes.
+  
+  adjustXYvals(pod_pos);
+  _armheading[kBaseAxis] = getBaseAxisHeading();
+  _armheading[kMiddleAxis] = getMiddleAxisHeading();
+
+}
+
+// This will occur each loop without user input.
 void ArmSteppers::moving(){
-//constant checking
- if (_armheading > _armcurrent){
+  if (_armheading[b_base_or_middle] > _armcurrent[b_base_or_middle]){
     //void function direction move arm --
   }
-  if (_armheading < _armcurrent){
+  if (_armheading[b_base_or_middle] < _armcurrent[b_base_or_middle]){
     //void function direction move arm ++
   }
+  b_base_or_middle = !b_base_or_middle; //alternates which stepper is on, giving the other a delay time.
   //here RPM code will go.
 }
