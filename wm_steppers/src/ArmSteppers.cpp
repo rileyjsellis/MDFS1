@@ -1,66 +1,77 @@
 #include "Arduino.h"
 #include "ArmSteppers.h"
 
-ArmSteppers::ArmSteppers(byte allStepperPins[2][2]) {
-  for (int i = 0; i < 2; i++){
-    for (int j = 0; j < 2; j++){
+ArmSteppers::ArmSteppers(byte allStepperPins[2][2])
+{
+  for (int i = 0; i < 2; i++)
+  {
+    for (int j = 0; j < 2; j++)
+    {
       pinMode(allStepperPins[i][j], OUTPUT);
-      switch (i){
-        case 0:
-          _pinMotion[j] = allStepperPins[i][j];
-        case 1:
-          _pinDirection[j] = allStepperPins[i][j];
+      switch (i)
+      {
+      case 0:
+        _pinMotion[j] = allStepperPins[i][j];
+      case 1:
+        _pinDirection[j] = allStepperPins[i][j];
       }
     }
   }
 }
 
-//This function adjust's the user's desired inputs.
-void ArmSteppers::adjustXYvals(int pod_pos[2]){
-  for(int i = 0; i < 2; i++){
+// This function adjust's the user's desired inputs.
+
+void ArmSteppers::adjustXYvals(int pod_pos[2])
+{
+  for (int i = 0; i < 2; i++)
+  {
     _pod_pos[i] = pod_pos[i];
   }
-  _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX; //adding x val to pod distance.
-  _pod_pos[1] = _pod_pos[0] + _kAddY; //adding y to consider claw height and initial stepper height.
+  _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX; // adding x val to pod distance.
+  _pod_pos[1] = _pod_pos[0] + _kAddY;             // adding y to consider claw height and initial stepper height.
 }
 
-//Trig calculations to get the base angle
-float ArmSteppers::getBaseAxisHeading(){
-  _side_c_to_pos = sqrt(_pod_pos[0]*_pod_pos[0]+_pod_pos[1]*_pod_pos[1]); //hypotenuse
+// Trig calculations to get the base angle
+float ArmSteppers::getBaseAxisHeading()
+{
+  _side_c_to_pos = sqrt(_pod_pos[0] * _pod_pos[0] + _pod_pos[1] * _pod_pos[1]); // hypotenuse
 
-  float _theta_b_1 = atan2(_pod_pos[1],_pod_pos[2]) * 180/3.14; //x and y initial
-  float _theta_b_2 = acos((_kArmA^2 + _side_c_to_pos^2 - _kArmB^2)
-                      /  (2 * _kArmA * _side_c_to_pos)); //angle within created triangle
+  // x and y initial
+  float _theta_b_1 = atan2(_pod_pos[1], _pod_pos[2]) * 180 / (3.14);
+  float _theta_b_2 = acos((_kArmA * _kArmA + _side_c_to_pos * _side_c_to_pos - _kArmB * _kArmB) / (2 * _kArmA * _side_c_to_pos)); // angle within created triangle
 
-  return (180 - (_theta_b_1 + _theta_b_2)); //180 minus angles
+  return (180 - (_theta_b_1 + _theta_b_2)); // 180 minus angle
 }
 
-//Trig calculations to get stepper that alters the middle arm node.
-float ArmSteppers::getMiddleAxisHeading(){
-  
-  float _theta_c = acos((_kArmA^2 + _kArmB - _side_c_to_pos^2) 
-                  / (2 * _kArmA * _kArmB));
+// Trig calculations to get stepper that alters the middle arm node.
+float ArmSteppers::getMiddleAxisHeading()
+{
 
-  return (180 - (_theta_c)); //180 minus angles
+  float _theta_c = acos((_kArmA * _kArmA + _kArmB * _kArmB - _side_c_to_pos * _side_c_to_pos) / (2 * _kArmA * _kArmB));
+
+  return (180 - (_theta_c)); // 180 minus angles
 }
 
-//This is the code the user will input for each pod and deposit, giving only x and y.
-void ArmSteppers::moveTo(int pod_pos[2]){ //to apply during state changes.
-  
+// This is the code the user will input for each pod and deposit, giving only x and y.
+void ArmSteppers::moveTo(int pod_pos[2])
+{ // to apply during state changes.
+
   adjustXYvals(pod_pos);
   _armheading[kBaseAxis] = getBaseAxisHeading();
   _armheading[kMiddleAxis] = getMiddleAxisHeading();
-
 }
 
 // This will occur each loop without user input.
-void ArmSteppers::moving(){
-  if (_armheading[b_base_or_middle] > _armcurrent[b_base_or_middle]){
-    //void function direction move arm --
+void ArmSteppers::moving()
+{
+  if (_armheading[b_base_or_middle] > _armcurrent[b_base_or_middle])
+  {
+    // void function direction move arm --
   }
-  if (_armheading[b_base_or_middle] < _armcurrent[b_base_or_middle]){
-    //void function direction move arm ++
+  if (_armheading[b_base_or_middle] < _armcurrent[b_base_or_middle])
+  {
+    // void function direction move arm ++
   }
-  b_base_or_middle = !b_base_or_middle; //alternates which stepper is on, giving the other a delay time.
-  //here RPM code will go.
+  b_base_or_middle = !b_base_or_middle; // alternates which stepper is on, giving the other a delay time.
+  // here RPM code will go.
 }
