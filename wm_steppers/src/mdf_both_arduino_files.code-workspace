@@ -8,7 +8,7 @@
 		}
 	],
   "settings": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "ms-vscode.cpptools"
   },
   "extensions": {
     "recommendations": [
