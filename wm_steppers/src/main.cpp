@@ -45,9 +45,10 @@ byte by_state = 0;
 const int kJoyNeutral = 255 / 2;  // half of byte recieved
 
 // 5. state machine specific code
-byte last_state = 0;
 byte state = 0;
-byte pod_collection_state = 0;
+byte last_state = 0;
+byte pod_state = 0;
+byte last_pod_state = 0;
 
 // stepper
 int i_step_pin = kStepMiddlePin;
@@ -74,31 +75,33 @@ void setup() {
   Serial.begin(9600);
 }
 
-// ensures timer is only reset once for each state.
+// Ensures time is only seen once per state.
 void stateDuration(int timing) {
-  if (state != last_state) {
+  if (state != last_state || pod_state != last_pod_state) {
     us_state_timer = us_current_time + timing;
   }
+  last_state = state;
+  last_pod_state = pod_state;
 }
 
-// This progresses all states.
+// This progresses all states after given timer.
 void stateProgression() {
   if (us_state_timer < us_current_time && state != 0) {
-    if (pod_collection_state != 0) {
-      pod_collection_state++;
+    if (pod_state != 0) {
+      pod_state++;
     } else {
       state++;
     }
   }
 }
 
-// All repeated tasks within single pod collection.
+// Repeated tasks for collecting and depositing a single pod.
 void collectPod(const int collect_pod[2]) {
-  switch (pod_collection_state) {
+  switch (pod_state) {
     case 0:
       // timer prevents a loop
       if (us_current_time > (us_time_since_pod_collection + 2000)) {
-        pod_collection_state++;
+        pod_state++;
       }
     case 1:
       stateDuration(100);
@@ -115,11 +118,12 @@ void collectPod(const int collect_pod[2]) {
     case 5:
       claw.open();  // release pod into chassis path
       us_time_since_pod_collection = us_current_time;
-      pod_collection_state = 0;
+      pod_state = 0;
   }
 }
 
-// main state machine. will test if this functions as predicted.
+// Main State Machine. Testing required but relies on timing to reach each
+// location.
 void stateMachine() {
   switch (state) {
     case 0:  // waits for button press to begin track.

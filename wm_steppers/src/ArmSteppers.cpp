@@ -16,15 +16,15 @@ ArmSteppers::ArmSteppers(byte allStepperPins[2][2]) {
   }
 }
 
-// Private: Changes x and y inputs include robot's base axis distancesg that
-// will change the distance the arm has to extend.
+// Private: Takes input x and y values to pod, changes values to include
+// dimensions of the robot chassis itself.
 void ArmSteppers::adjustXYvals(const int pod_pos[2]) {
   for (int i = 0; i < 2; i++) {
     _pod_pos[i] = pod_pos[i];
   }
-  // changes due to distance from platform.
+  // x: distance from platform
   _pod_pos[0] = _pod_pos[0] + _kNodeXToPlatformX;
-  // changes due to claw height and initial stepper height.
+  // y: arm axis height, claw height
   _pod_pos[1] = _pod_pos[0] + _kAddY;
 }
 
@@ -62,7 +62,7 @@ float ArmSteppers::getSideCLength() {
   return sideCLength;
 }
 
-// Public: User will call this function for each pod collection.
+// Public: User will use this to move arm to each pod location.
 void ArmSteppers::moveTo(const int pod_pos[2]) {
   adjustXYvals(pod_pos);
   _dist_side_c = getSideCLength();
@@ -70,14 +70,13 @@ void ArmSteppers::moveTo(const int pod_pos[2]) {
   _armheading[kMiddleAxis] = getMiddleAxisHeading();
 }
 
-// Public: moveTo function specifically for each deposit, may need to have
-// adjustXYvals removed, testing will reveal outcomes.
+// Public: adjusted moveTo function, will require testing and value change.
 void ArmSteppers::deposit() {
-  const int _deposit_x_y[2] = {0, 50};  // initial test values, to change.
+  const int _deposit_x_y[2] = {0, 50};
   moveTo(_deposit_x_y);
 }
 
-// Has arm axis reached its destination?
+// Private: Has arm axis reached its destination?
 bool ArmSteppers::isStepperEndpointMet() {
   if (_armheading[b_which_stepper] == _armcurrent[b_which_stepper]) {
     return true;
@@ -85,7 +84,7 @@ bool ArmSteppers::isStepperEndpointMet() {
   return false;
 }
 
-// Checks which direction to move
+// Private: Checks which direction to move
 bool ArmSteppers::getDirection() {
   if (_armheading[b_which_stepper] > _armcurrent[b_which_stepper]) {
     return true;
@@ -93,12 +92,12 @@ bool ArmSteppers::getDirection() {
   return false;
 }
 
-// Writes direction for both steppers
+// Private: Writes direction for both steppers
 void ArmSteppers::adjustDirection() {
   digitalWrite(_pinDirection[b_which_stepper], getDirection());
 }
 
-// after moving a step, this registers the change.
+// Private: after moving a step, this records the change.
 void ArmSteppers::changeCurrentPosition(bool has_step_occured) {
   if (has_step_occured == true) {
     if (getDirection() == true) {
@@ -110,7 +109,7 @@ void ArmSteppers::changeCurrentPosition(bool has_step_occured) {
   }
 }
 
-// Alternates which stepper is moving after period T
+// Private: Alternates which stepper is moving after period T
 void ArmSteppers::nextStepPowered(bool b_is_power_on) {
   if (us_current_time - us_last_stepper_motion >= f_T) {
     bool b_alternating_steppers = b_which_stepper;
