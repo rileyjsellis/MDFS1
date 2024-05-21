@@ -1,0 +1,17 @@
+// CODE TO CHANGE
+float ArmSteppers::setRPM(int rpm, float res) {  // assuming 150RPM, 0.9deg res
+  float freq = (float)rpm / ((res / 360) * 60);  // freq = 1000
+  float period = 1 / freq;                       // period = 1/1000
+  return (period * 0.5) * 1000;                  // T = 500 microseconds
+}
+
+// RPM CODE TO CHANGE
+void ArmSteppers::readRPM() {
+  if (Serial.available() > 0) {
+    s_RPM = Serial.readString();
+    f_T = setRPM(s_RPM.toInt(), f_resolution);
+    Serial.print(s_RPM);
+  }
+}
+
+//calculation code for RPM, not needed anymore.

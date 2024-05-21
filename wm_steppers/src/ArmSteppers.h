@@ -19,11 +19,20 @@ class ArmSteppers {
   void moving();
 
  private:
+  // Pod Calculations
   float getSideCLength();
   void adjustXYvals(const int pod_pos[2]);
   float getBaseAxisHeading();
   float getMiddleAxisHeading();
 
+  // Stepper Movement Functions
+  bool getDirection();
+  void adjustDirection();
+  bool isStepperEndpointMet();
+  void nextStepPowered(bool is_power_on);
+  void changeCurrentPosition(bool has_step_occured);
+
+  // All Stepper Pins
   byte _pinMotion[2];
   byte _pinDirection[2];
 
@@ -44,17 +53,7 @@ class ArmSteppers {
   // To simplify readability in ArmStepper functions.
   const bool kBaseAxis = 0;
   const bool kMiddleAxis = 1;
-  bool b_base_or_middle = 0;
-
-  enum stepper {
-    base = 0,
-    middle = 1,
-  };
-
-  enum direction {
-    base = 0,
-    middle = 1,
-  };
+  bool b_which_stepper = 0;
 
   // Main Values for moving the arms to next state.
   int _armheading[2] = {0, 0};
@@ -62,6 +61,13 @@ class ArmSteppers {
 
   // timing
   unsigned long us_last_stepper_motion = 0;
+  unsigned long us_current_time;
+
+  // RPM initial calculations
+  const float i_steps = 200;                  // Nema specs
+  float f_resolution = (float)360 / i_steps;  // step angle 0.9deg
+  String s_RPM = "150";                       // set s_RPM prior to code
+  float f_T = 1;                              // 1 millisecond, assuming above.
 };
 
 #endif

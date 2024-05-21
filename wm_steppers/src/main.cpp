@@ -18,7 +18,7 @@ Claw claw(kClawPin);
 byte allStepperPins[2][2] = {{kStepBasePin, kStepMiddlePin},
                              {kDirBasePin, kDirMiddlePin}};
 
-// creating Arm Stepper Objects
+// creating arm stepper object
 ArmSteppers arm(allStepperPins);
 
 // pod positions = {pod_x, pod_y}
@@ -60,13 +60,6 @@ enum dc_motor {
 // stepper
 int i_step_pin = kStepMiddlePin;
 int i_dir_pin = kDirMiddlePin;
-
-// RPM initial calculations
-const float i_steps = 200;  // Nema specs //should this all be in Arm Stepper??
-float f_resolution = (float)360 / i_steps;  // step angle 0.9deg
-String s_RPM = "150";                       // set s_RPM prior to code
-float f_T = 0.5;  // 500 microseconds, assuming 150rpm, can change in code
-bool b_last_step = LOW;  // high low bool use case
 
 void readData(int num) {
   if (num >= kWireArrayLength) {
@@ -143,26 +136,28 @@ void stateProgression() {
   }
 }
 
-// Reduces repetitive states required in main state machine.
+// All repeated tasks within single pod collection.
 void collectPod(const int collect_pod[2]) {
   switch (pod_collection_state) {
-    case 0:  // if it's been over a second since last pod collection
+    case 0:
+      // timer prevents a loop
       if (us_current_time > (us_time_since_pod_collection + 2000)) {
         pod_collection_state++;
       }
     case 1:
-      stateDuration(500);
+      stateDuration(100);
       claw.open();
     case 2:
       stateDuration(1000);
-      arm.moveTo(collect_pod);
+      arm.moveTo(collect_pod);  // move towards specific pod
     case 3:
       stateDuration(500);
       claw.close();
-    case 4:
+    case 4:  // move to deposit location
       stateDuration(1000);
       arm.deposit();
     case 5:
+      claw.open();  // release pod into chassis path
       us_time_since_pod_collection = us_current_time;
       pod_collection_state = 0;
   }
