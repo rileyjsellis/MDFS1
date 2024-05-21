@@ -14,12 +14,13 @@
 class ArmSteppers {
  public:
   ArmSteppers(byte allStepperPins[2][2]);
-  void moveTo(int pod_pos[2]);
+  void moveTo(const int pod_pos[2]);
+  void deposit();
   void moving();
 
  private:
   float getSideCLength();
-  void adjustXYvals(int pod_pos[2]);
+  void adjustXYvals(const int pod_pos[2]);
   float getBaseAxisHeading();
   float getMiddleAxisHeading();
 
@@ -28,33 +29,39 @@ class ArmSteppers {
 
   int _pod_pos[2];  // x and y inputs
 
-  // Trig Calculations
+  // Trig Values used in Multiple private functions
   const float _kArmSideA = 300;     // side a, lower arm
   const float _kArmSideB = 250.24;  // side b, upper arm
+  float _dist_side_c;               // side c, distance to pod
 
-  float _dist_side_c;  // side c
-  float _angleA;
-  float _angleB;  // for first axis, between a and c
-  float _angleC;  // for second axis, between a and b
-
-  // Alterations to x and y position inputs
-  // This is designed to be altered as the final robot chassis and arm are
-  // finalised yet.
+  // Private alterations to x and y inputs, designed to be altered as chassis
+  // and arm aren't finalised yet.
   const int _kNodeXToPlatformX = 130;
-  const int _kClawOverPodY =
-      90;  // these two cancel out to be 40, create new const.
+  const int _kClawOverPodY = 90;
   const int _kBaseNodeY = 50;
-  const int _kAddY = _kClawOverPodY - _kBaseNodeY;
+  const int _kAddY = _kClawOverPodY - _kBaseNodeY;  // = 40 y total
 
-  // Values to simplify code readability in ArmSteppers.cpp
+  // To simplify readability in ArmStepper functions.
   const bool kBaseAxis = 0;
   const bool kMiddleAxis = 1;
   bool b_base_or_middle = 0;
 
-  // Main Values to determine arm steps remaining.
-  byte _armheading[2] = {0, 0};
-  byte _armcurrent[2] = {
-      0, 0};  // starts at 0 degrees, check solidworks calculations.
+  enum stepper {
+    base = 0,
+    middle = 1,
+  };
+
+  enum direction {
+    base = 0,
+    middle = 1,
+  };
+
+  // Main Values for moving the arms to next state.
+  int _armheading[2] = {0, 0};
+  int _armcurrent[2] = {0, 0};
+
+  // timing
+  unsigned long us_last_stepper_motion = 0;
 };
 
 #endif

@@ -5,17 +5,18 @@
 
 // 1. pin assignments
 const byte kEnPin = 8;
-const byte kStepXPin = 2;
-const byte kDirXPin = 5;
-const byte kStepYPin = 3;
-const byte kDirYPin = 6;
+const byte kStepBasePin = 2;
+const byte kDirBasePin = 5;
+const byte kStepMiddlePin = 3;
+const byte kDirMiddlePin = 6;
 
 // servo inputs for the claw. needed here
 const byte kClawPin = 7;  // change this
 
 Claw claw(kClawPin);
 
-byte allStepperPins[2][2] = {{kStepXPin, kStepYPin}, {kDirXPin, kDirYPin}};
+byte allStepperPins[2][2] = {{kStepBasePin, kStepMiddlePin},
+                             {kDirBasePin, kDirMiddlePin}};
 
 // creating Arm Stepper Objects
 ArmSteppers arm(allStepperPins);
@@ -34,13 +35,19 @@ const byte kWireArrayLength = 3;
 
 // 3. timing
 unsigned long us_current_time;
-unsigned long us_last_stepper_motion = 0;
+unsigned long us_state_timer;
+unsigned long us_time_since_pod_collection = 0;
 
 // 4. joy and states inputs
 int i_stepper_direction = 0;  // renaming for it's purpose
 int i_joy_y = 0;
 byte by_state = 0;
 const int kJoyNeutral = 255 / 2;  // half of byte recieved
+
+// 5. state machine specific code
+byte last_state = 0;
+byte state = 0;
+byte pod_collection_state = 0;
 
 //*** Riley's note, to review enum possibility
 enum dc_motor {
@@ -51,11 +58,11 @@ enum dc_motor {
 };
 
 // stepper
-int i_step_pin = kStepYPin;
-int i_dir_pin = kDirYPin;
+int i_step_pin = kStepMiddlePin;
+int i_dir_pin = kDirMiddlePin;
 
 // RPM initial calculations
-const float i_steps = 400;                  // Nema17 specs
+const float i_steps = 200;  // Nema specs //should this all be in Arm Stepper??
 float f_resolution = (float)360 / i_steps;  // step angle 0.9deg
 String s_RPM = "150";                       // set s_RPM prior to code
 float f_T = 0.5;  // 500 microseconds, assuming 150rpm, can change in code
@@ -81,21 +88,6 @@ void setup() {
   Wire.onReceive(readData);
   Serial.begin(9600);
 }
-
-/*
-how best to set up this code so it won't interrupt wheel movement?
-
-send instructions to move stepper.
-stepper is always 180.
-stepper always wants to work to get back to 180, so changing that value.
-
-stepper next step function
-  if greater than 180, direction is negative and -- one degrees
-  if less thatn 180, direction is positive and ++ one degrees
-
-function is constantly called. new values are added all the time, SO it's a
-counter variable we're playing with.
-*/
 
 void stepperNextStep() {
   if (us_current_time - us_last_stepper_motion >= f_T) {
@@ -133,8 +125,91 @@ void stepperProcess() {
   stepperMoving();
 }
 
+// ensures timer is only reset once for each state.
+void stateDuration(int timing) {
+  if (state != last_state) {
+    us_state_timer = us_current_time + timing;
+  }
+}
+
+// This progresses all states.
+void stateProgression() {
+  if (us_state_timer < us_current_time && state != 0) {
+    if (pod_collection_state != 0) {
+      pod_collection_state++;
+    } else {
+      state++;
+    }
+  }
+}
+
+// Reduces repetitive states required in main state machine.
+void collectPod(const int collect_pod[2]) {
+  switch (pod_collection_state) {
+    case 0:  // if it's been over a second since last pod collection
+      if (us_current_time > (us_time_since_pod_collection + 2000)) {
+        pod_collection_state++;
+      }
+    case 1:
+      stateDuration(500);
+      claw.open();
+    case 2:
+      stateDuration(1000);
+      arm.moveTo(collect_pod);
+    case 3:
+      stateDuration(500);
+      claw.close();
+    case 4:
+      stateDuration(1000);
+      arm.deposit();
+    case 5:
+      us_time_since_pod_collection = us_current_time;
+      pod_collection_state = 0;
+  }
+}
+
+void stateMachine() {
+  switch (state) {
+    case 0:  // await button press to begin track run
+             // if button pressed = true: state++;
+    case 1:
+      // move to platform
+      stateDuration(1000);
+    case 2:
+      // move to first pod
+      stateDuration(500);
+    case 3:
+      stateDuration(200);
+      collectPod(kGround150);
+    case 4:
+      // move to 1st tree
+    case 5:
+      collectPod(kTree150);
+    case 6:
+      // move to ground pod
+    case 7:
+      collectPod(kGround200);
+    case 8:
+      // travel across to next platform
+    case 9:
+      collectPod(kGround300);
+    case 10:
+      // move to 2nd tree
+    case 11:
+      collectPod(kTree300);
+    case 12:
+      // move to final pod
+    case 13:
+      collectPod(kGround200);
+    case 14:
+      // move to deposit hole
+  }
+  stateProgression();
+}
+
 void loop() {
   us_current_time = millis();
-  // state machine checker here
+
+  stateMachine();
   arm.moving();
 }
