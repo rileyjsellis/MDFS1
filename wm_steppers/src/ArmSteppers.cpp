@@ -40,6 +40,7 @@ float ArmSteppers::getBaseAxisHeading() {
   float baseAxisHeading = (180 - (_theta_b_1 + _theta_b_2));
 
   return baseAxisHeading;
+  // issue, needs to return angle rounded to steps (whole ints)
 }
 
 // Private: Trig calculations to output the intended middle axis angle.
@@ -51,6 +52,7 @@ float ArmSteppers::getMiddleAxisHeading() {
   float middleAxisHeading = (180 - (_theta_c));
 
   return middleAxisHeading;
+  // issue, needs to return angle rounded to steps (whole ints)
 }
 
 // Private: Finds distance arm must travel from the given x and y inputs
@@ -75,16 +77,63 @@ void ArmSteppers::deposit() {
   moveTo(_deposit_x_y);
 }
 
+// Has arm axis reached its destination?
+bool ArmSteppers::isStepperEndpointMet() {
+  if (_armheading[b_which_stepper] == _armcurrent[b_which_stepper]) {
+    return true;
+  }
+  return false;
+}
+
+// Checks which direction to move
+bool ArmSteppers::getDirection() {
+  if (_armheading[b_which_stepper] > _armcurrent[b_which_stepper]) {
+    return true;
+  }
+  return false;
+}
+
+// Writes direction for both steppers
+void ArmSteppers::adjustDirection() {
+  digitalWrite(_pinDirection[b_which_stepper], getDirection());
+}
+
+// after moving a step, this registers the change.
+void ArmSteppers::changeCurrentPosition(bool has_step_occured) {
+  if (has_step_occured == true) {
+    if (getDirection() == true) {
+      _armcurrent[b_which_stepper]--;
+      // test this with a serial print.
+    } else {
+      _armcurrent[b_which_stepper]++;
+    }
+  }
+}
+
+// Alternates which stepper is moving after period T
+void ArmSteppers::nextStepPowered(bool b_is_power_on) {
+  if (us_current_time - us_last_stepper_motion >= f_T) {
+    bool b_alternating_steppers = b_which_stepper;
+
+    digitalWrite(_pinMotion[b_alternating_steppers], b_is_power_on);
+    digitalWrite(_pinMotion[!b_alternating_steppers], LOW);
+
+    changeCurrentPosition(b_is_power_on);
+
+    b_which_stepper = !b_which_stepper;
+    us_last_stepper_motion = us_current_time;
+  }
+}
+
 // Public: User places this in their main loop, working off millis() it
-// will adjust both arms from current position to the desired heading position.
+// will adjust both arms from current position to the desired heading
+// position.
 void ArmSteppers::moving() {
-  if (_armheading[b_base_or_middle] > _armcurrent[b_base_or_middle]) {
-    // void function direction move arm --
+  us_current_time = millis();
+  if (isStepperEndpointMet() == false) {
+    adjustDirection();
+    nextStepPowered(true);
+  } else {
+    nextStepPowered(false);
   }
-  if (_armheading[b_base_or_middle] < _armcurrent[b_base_or_middle]) {
-    // void function direction move arm ++
-  }
-  b_base_or_middle = !b_base_or_middle;  // alternates which stepper is on,
-                                         // giving the other a delay time.
-  // here RPM code will go.
 }
