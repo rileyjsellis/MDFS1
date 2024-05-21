@@ -168,10 +168,10 @@ void collectPod(const int collect_pod[2]) {
   }
 }
 
+// main state machine. will test if this functions as predicted.
 void stateMachine() {
   switch (state) {
-    case 0:  // await button press to begin track run
-             // if button pressed = true: state++;
+    case 0:  // waits for button press to begin track.
     case 1:
       // move to platform
       stateDuration(1000);
