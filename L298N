@@ -3,6 +3,8 @@ int motor1pin2 = 3;
 
 int motor2pin1 = 4;
 int motor2pin2 = 5;
+//declaring motors 
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -11,6 +13,7 @@ void setup() {
   pinMode(motor2pin1, OUTPUT);
   pinMode(motor2pin2, OUTPUT);
 
+//enables speed for motors
   pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
 }
