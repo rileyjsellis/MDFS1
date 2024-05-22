@@ -1,7 +1,7 @@
 // code for joystick and for the wheels L298N systems
 
 #include <Arduino.h>
-#include <MecanumWheels.h>
+#include <TwoWheels.h>
 #include <Wire.h>
 
 // 1. joystick pin assignment
@@ -10,29 +10,19 @@ const byte kJoyYPin = A1;
 const byte kJoyBtnPin = 12;
 
 // 2. DC pin assignment
-const byte kEnA1 = 2;
-const byte kIn1 = 1;
-const byte kIn2 = 2;
+const byte kEnA = 9;
+const byte kIn1 = 2;
+const byte kIn2 = 3;
 
-const byte kEnB1 = 5;
-const byte kIn3 = 3;
-const byte kIn4 = 4;
+const byte kEnB = 10;
+const byte kIn3 = 4;
+const byte kIn4 = 5;
 
-const byte kEnA2 = 6;
-const byte kIn5 = 7;
-const byte kIn6 = 8;
-
-const byte kEnB2 = 9;
-const byte kIn7 = 10;
-const byte kIn8 = 11;
-
-byte allPins[3][4] = {{kEnA1, kEnB1, kEnA2, kEnB2},
-                      {kIn1, kIn3, kIn5, kIn7},
-                      {kIn2, kIn4, kIn6, kIn8}};
+byte allPins[3][2] = {{kEnA, kEnB}, {kIn1, kIn3}, {kIn2, kIn4}};
 
 // creating an object for all dc wheels
 
-MecanumWheels wheels(allPins);
+TwoWheels wheels(allPins);
 
 // 3. i2c wire
 const byte kWireAddress = 9;
