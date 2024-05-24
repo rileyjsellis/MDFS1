@@ -10,15 +10,16 @@ const byte kJoyYPin = A1;
 const byte kJoyBtnPin = 12;
 
 // 2. DC pin assignment
-const byte kEnA = 9;
-const byte kIn1 = 2;
-const byte kIn2 = 3;
+//const byte kEnA = 22;
+const byte kIn1 = 22;
+const byte kIn2 = 24;
 
-const byte kEnB = 10;
-const byte kIn3 = 4;
-const byte kIn4 = 5;
+//const byte kEnB = ;
+const byte kIn3 = 26;
+const byte kIn4 = 28;
 
-byte allPins[3][2] = {{kEnA, kEnB}, {kIn1, kIn3}, {kIn2, kIn4}};
+//byte allPins[3][2] = {{kEnA, kEnB}, {kIn1, kIn3}, {kIn2, kIn4}}; //with all
+byte allPins[3][2] = {{255, 255}, {kIn1, kIn3}, {kIn2, kIn4}};
 
 // creating an object for all dc wheels
 
