@@ -1,12 +1,16 @@
 {
 	"folders": [
-		{
-			"path": "../../wm_i2c"
-		},
-		{
-			"path": ".."
-		}
-	],
+    {
+      "path": "../../wm_i2c"
+    },
+    {
+      "path": ".."
+    },
+    {
+      "name": "wm_remote",
+      "path": "../../wm_remote"
+    }
+  ],
   "settings": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
   },

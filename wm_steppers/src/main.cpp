@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArmSteppers.h>
 #include <Claw.h>
+#include <Servo.h>
 #include <TwoWheels.h>
 #include <Wire.h>
 
