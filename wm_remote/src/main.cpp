@@ -21,12 +21,10 @@ bool b_is_transmitting = true;
 bool b_data_shown = false;
 int b_data_speed = 300;
 
-const byte kJoyPins[4] = {A0, A1, A2, A3};
-const int kJoyPinRange[4] = {400, 400, 16, 10};
-
-const byte kJoyBtnPin = 2;
-
+// joystick values to send
 int i_joy_vals[4] = {0, 0, 0, 0};
+const byte kJoyPins[4] = {A1, A0, A3, A2};
+const byte kJoyBtnPin = 2;
 
 // pushbutton
 const byte kPushBtnPin = 4;
@@ -103,38 +101,21 @@ void setup() {
   nrf.stopListening();  // act as a transmitter
 }
 
-void loop() {
-  us_current_time = millis();
-
-  button_Pressed();
-
-  transciever_Send_Or_Recieve();
-
-  send_Data();
-
-  read_Data();
-
-  display_Terminal_Data();
-
-  lcd_Status_Update();
-
-  led_Status();
-}
-
 void readJoySticks() {
-  for (int i = 0; i < 4; i++) {  // read each button
-    int val = map(analogRead(kJoyPins[i]), 1, 1024, -5, 5);
-    int read_pace = val;
-    if (val < 0) {
-      read_pace = val * (-1);
-    }
-    if (us_current_time >= (us_last_joy_read + 1000 / read_pace)) {
-      us_last_joy_read = us_current_time;
-      if (val >= 1) {
+  if (us_current_time >= (us_last_joy_read + 300)) {
+    us_last_joy_read = us_current_time;
+    for (int i = 0; i < 4; i++) {
+      int val = map(analogRead(kJoyPins[i]), 1, 1024, -5, 5);
+      if (i == 0 || i == 1) {  // offset the input joystick
+        val = val * (-1);
+      }
+      if (val >= 2) {
         i_joy_vals[i]++;
-      } else if (val >= -1) {
+      } else if (val >= -2) {
         i_joy_vals[i]--;
       }
+      // Serial.println(String(String(i) + " " + String(i_joy_vals[i]) + "
+      // changed.");
     }
   }
 }
@@ -215,11 +196,11 @@ void send_Data() {
     if ((millis() - us_last_time_sent) > b_data_speed) {
       transmission_counter = ++transmission_counter;
 
-      data[0] = i_joy_vals[0];
-      data[1] = i_joy_vals[1];
-      data[2] = i_joy_vals[2];
-      data[3] = i_joy_vals[3];
-      data[4] = int(i_button_counter[1]);
+      data[0] = i_joy_vals[0];             // x pos
+      data[1] = i_joy_vals[1];             // y pos
+      data[2] = i_joy_vals[2];             // state
+      data[3] = i_joy_vals[3];             // duration
+      data[4] = int(i_button_counter[1]);  // run test with values.
       data[5] = i_are_sends_up_to_date;
       data[6] = transmission_counter;
 
@@ -229,36 +210,6 @@ void send_Data() {
     }
     if ((millis() - us_last_time_sent) > 200 && led_state == 1) {
       led_state = 0;
-    }
-  }
-}
-
-void read_Data() {
-  if (b_is_transmitting == false) {
-    if (nrf.available()) {
-      nrf.read(&data, sizeof(data));
-
-      arm_y = data[0];  // servo arms
-      arm_x = data[1];
-      // robot_internal_temp = data[2]; //internal temperature, works but not
-      // enough pins
-      remaining_angle = data[2];
-      movement_state = data[3];  // wheel as percentage of 255
-      movement_state_a = data[4];
-      total_hits = data[5];
-      transmission_counter = data[6];  // transmission
-      led_state = 1;
-      b_data_shown = false;
-      process_Movement_State_Data();
-      if (total_hits > prev_total_hits) {
-        // prevents robot from hitting immediately if it's restarted but remote
-        // stays on
-        prev_total_hits = total_hits;
-        i_are_sends_up_to_date = 1;
-      }
-      if (lcd_state <= 1) {          // gets lcd loop started again.
-        lcd_state = last_lcd_state;  // continues from previous
-      }
     }
   }
 }
@@ -298,9 +249,34 @@ void process_Movement_State_Data() {
   }
 }
 
-void button_Pressed() {
-  pressed(0, kPushBtnPin);
-  pressed(1, kJoyBtnPin);
+void read_Data() {
+  if (b_is_transmitting == false) {
+    if (nrf.available()) {
+      nrf.read(&data, sizeof(data));
+
+      arm_y = data[0];  // servo arms
+      arm_x = data[1];
+      // robot_internal_temp = data[2]; //internal temperature, works but not
+      // enough pins
+      remaining_angle = data[2];
+      movement_state = data[3];  // wheel as percentage of 255
+      movement_state_a = data[4];
+      total_hits = data[5];
+      transmission_counter = data[6];  // transmission
+      led_state = 1;
+      b_data_shown = false;
+      process_Movement_State_Data();
+      if (total_hits > prev_total_hits) {
+        // prevents robot from hitting immediately if it's restarted but remote
+        // stays on
+        prev_total_hits = total_hits;
+        i_are_sends_up_to_date = 1;
+      }
+      if (lcd_state <= 1) {          // gets lcd loop started again.
+        lcd_state = last_lcd_state;  // continues from previous
+      }
+    }
+  }
 }
 
 void pressed(int but, int pin) {
@@ -328,6 +304,11 @@ void pressed(int but, int pin) {
       }
     }
   }
+}
+
+void button_Pressed() {
+  pressed(0, kPushBtnPin);
+  pressed(1, kJoyBtnPin);
 }
 
 void display(String message_top_line,
@@ -464,4 +445,24 @@ void led_Status() {
     analogWrite(colour::red, led_brightness);
     analogWrite(colour::green, 0);
   }
+}
+
+void loop() {
+  us_current_time = millis();
+
+  readJoySticks();
+
+  button_Pressed();
+
+  transciever_Send_Or_Recieve();
+
+  send_Data();
+
+  read_Data();
+
+  display_Terminal_Data();
+
+  lcd_Status_Update();
+
+  led_Status();
 }
