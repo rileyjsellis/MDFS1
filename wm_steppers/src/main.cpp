@@ -13,16 +13,16 @@ const byte kDirMiddlePin = 6;
 
 // DC MOTOR MOVING INTO THIS CODE
 //  2. DC pin assignment
-// const byte kEnA = 22;
+const byte kEnA = 44;
 const byte kIn1 = 22;
-const byte kIn2 = 24;
+const byte kIn2 = 24;  // checked the output of these
 
-// const byte kEnB = ;
+const byte kEnB = 46;
 const byte kIn3 = 26;
 const byte kIn4 = 28;
 
 // byte allPins[3][2] = {{kEnA, kEnB}, {kIn1, kIn3}, {kIn2, kIn4}}; //with all
-byte allPins[3][2] = {{255, 255}, {kIn1, kIn3}, {kIn2, kIn4}};
+byte allPins[3][2] = {{kEnA, kEnB}, {kIn1, kIn3}, {kIn2, kIn4}};
 
 // creating an object for all dc wheels
 
@@ -63,10 +63,11 @@ byte by_state = 0;
 const int kJoyNeutral = 255 / 2;  // half of byte recieved
 
 // 5. state machine specific code
-byte state = 0;
-byte last_state = 0;
+byte state = 1;  // change once we have a start switch
+byte last_state =
+    30;  // just to offset the initial states, maybe make it out of range
 byte pod_state = 0;
-byte last_pod_state = 0;
+byte last_pod_state = last_state;
 
 // stepper
 int i_step_pin = kStepMiddlePin;
@@ -97,6 +98,8 @@ void setup() {
 void stateDuration(int timing) {
   if (state != last_state || pod_state != last_pod_state) {
     us_state_timer = us_current_time + timing;
+    // Serial.println("reset reached!! state:" + String(state) + " time:" +
+    // String(millis())); //test for state change
   }
   last_state = state;
   last_pod_state = pod_state;
@@ -104,7 +107,8 @@ void stateDuration(int timing) {
 
 // This progresses all states after given timer.
 void stateProgression() {
-  if (us_state_timer < us_current_time && state != 0) {
+  if (us_state_timer <= us_current_time && state != 0) {
+    Serial.println(String(state));
     if (pod_state != 0) {
       pod_state++;
     } else {
@@ -118,117 +122,125 @@ void collectPod(const int collect_pod[2]) {
   switch (pod_state) {
     case 0:
       // timer prevents a loop
-      if (us_current_time > (us_time_since_pod_collection + 2000)) {
+      if (us_current_time >= (us_time_since_pod_collection + 2000)) {
         pod_state++;
       }
+      break;
     case 1:
-      Serial.println("cstate 1: open");
+      // Serial.println("cstate 1: open");
       stateDuration(500);
       claw.open();
+      break;
     case 2:
       stateDuration(1000);
-      Serial.println("cstate 2: move specific pod");
+      // Serial.println("cstate 2: move specific pod");
       arm.moveTo(collect_pod);  // move towards specific pod
+      break;
     case 3:
       stateDuration(500);
-      Serial.println("cstate 3: close claw");
+      // Serial.println("cstate 3: close claw");
+      break;
       claw.close();
     case 4:  // move to deposit location
       stateDuration(1000);
-      Serial.println("cstate 4: deposit ");
+      // Serial.println("cstate 4: deposit ");
       arm.deposit();
     case 5:
-      Serial.println("cstate 5: open");
+      // Serial.println("cstate 5: open");
       claw.open();  // release pod into chassis path
       us_time_since_pod_collection = us_current_time;
       pod_state = 0;
+      break;
   }
 }
 
 // Main State Machine. Testing required but relies on timing to reach each
 // location.
 void stateMachine() {
+  stateProgression();
   switch (state) {
     case 0:  // waits for button press to begin track.
+             // add a switch to this later on
+      break;
     case 1:
-      Serial.println(String(state) + ": turning right 1000");
       wheels.turnRight(5);
-      stateDuration(1000);
+      stateDuration(2000);
+      break;
     case 2:
-      Serial.println(String(state) + ": fowards");
       wheels.forwards();
       stateDuration(500);
+      break;
     case 3:
-      Serial.println(String(state) + ": collect pod start");
       stateDuration(200);
       collectPod(kGround150);
+      break;
     case 4:
       // move to first tree
-      Serial.println(String(state) + ": move to first tree");
       stateDuration(1000);
       wheels.forwards();
+      break;
     case 5:
-      Serial.println(String(state) + ": collect pod tree");
       stateDuration(500);
       collectPod(kTree150);
+      break;
     case 6:
       // move to ground pod
-      Serial.println(String(state) + ": moving to ground pod");
       stateDuration(1000);
       wheels.forwards();
+      break;
     case 7:
       stateDuration(1000);
-      Serial.println(String(state) + ": collect pod");
       collectPod(kGround200);
+      break;
 
     // here is the biggest problem area, multiple steps required to move the
     // robot fully from one side to the other.
     case 8:
       stateDuration(1000);
-      Serial.println(String(state) +
-                     ": reversing to turn");  // needs more movements in here
+
       wheels.backwards();
       // travel across to next platform
+      break;
 
     case 9:
       stateDuration(2000);
       wheels.turnLeft(5);
-      Serial.println(String(state) +
-                     ": turning! hopefully to reach other side");
+      break;
 
     case 10:
       wheels.backwards();
-      Serial.println(String(state) + ": reversing to align with the pod");
       stateDuration(500);
+      break;
 
     case 11:
       stateDuration(1000);
-      Serial.println(String(state) + ": collect ground pod");
       collectPod(kGround300);
+      break;
     case 12:
       stateDuration(1000);
       wheels.forwards();
-      Serial.println(String(state) + ": moving to second tree");
+      break;
       // move to 2nd tree
     case 13:
       stateDuration(1000);
-      Serial.println(String(state) + ": collect ground pod");
       collectPod(kTree300);
+      break;
     case 14:
       // move to final pod
       stateDuration(1000);
-      Serial.println(String(state) + ": move to final pod");
       wheels.forwards();
+      break;
     case 15:
       stateDuration(1000);
-      Serial.println(String(state) + ": collect ground pod");
       collectPod(kGround200);
+      break;
     case 16:
       // move to deposit hole
       stateDuration(1000);
-      Serial.println(String(state) + ": deposit!!!");
+      state = 1;  // move to actual final state
+      break;
+      // Serial.println(String(state) + ": deposit!!!");
   }
-  stateProgression();
 }
 
 void loop() {

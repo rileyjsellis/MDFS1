@@ -59,13 +59,13 @@ void TwoWheels::spinRight() {
 }
 
 void TwoWheels::turnLeft(int turningRadius) {
-  leftWheelForwards(true, (topSpeed * (10 - turningRadius)/10);
+  leftWheelForwards(true, (topSpeed * (10 - turningRadius)/10));
   rightWheelForwards(true, topSpeed);
 }
 
 void TwoWheels::turnRight(int turningRadius) {
   leftWheelForwards(true, topSpeed);
-  rightWheelForwards(true, (topSpeed * (10 - turningRadius)/10);
+  rightWheelForwards(true, (topSpeed * (10 - turningRadius)/10));
 }
 
 void TwoWheels::stop() {
