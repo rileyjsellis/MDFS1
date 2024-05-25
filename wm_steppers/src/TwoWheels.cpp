@@ -24,9 +24,9 @@ TwoWheels::TwoWheels(byte allPins[3][2]) {  // enables all pins as OUTPUT
 // Private functions to abstract away pin setup for directions and speed of each
 // wheel.
 void TwoWheels::wheelForwards(bool isLeft, bool isForward, int speed) {
-  digitalWrite(_enables[isLeft], speed);
+  analogWrite(_enables[isLeft], speed);
   digitalWrite(_forwards[isLeft], isForward);
-  digitalWrite(_backwards[isLeft], isForward);
+  digitalWrite(_backwards[isLeft], !isForward);
 }
 
 void TwoWheels::leftWheelForwards(bool isForward, int speed) {
