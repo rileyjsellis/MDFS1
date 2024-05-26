@@ -9,14 +9,13 @@
     {
       "name": "wm_remote",
       "path": "../../wm_remote"
+    },
+    {
+      "name": "wm_rf24",
+      "path": "../../wm_rf24"
     }
   ],
   "settings": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
   },
-  "extensions": {
-    "recommendations": [
-      "esbenp.prettier-vscode"
-    ]
-  }
 }
