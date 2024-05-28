@@ -95,6 +95,7 @@ bool ArmSteppers::getDirection() {
 // Private: Writes direction for both steppers
 void ArmSteppers::adjustDirection() {
   digitalWrite(_pinDirection[b_which_stepper], getDirection());
+  Serial.println(String(b_which_stepper) + String(getDirection()));
 }
 
 // Private: after moving a step, this records the change.

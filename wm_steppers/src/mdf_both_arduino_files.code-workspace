@@ -7,12 +7,16 @@
       "path": ".."
     },
     {
-      "name": "wm_remote",
-      "path": "../../wm_remote"
+      "name": "rush final",
+      "path": "../../../rush final"
     },
     {
-      "name": "wm_rf24",
-      "path": "../../wm_rf24"
+      "name": "rush stepper",
+      "path": "../../rush stepper"
+    },
+    {
+      "name": "rush stepper continued",
+      "path": "../../rush stepper continued"
     }
   ],
   "settings": {

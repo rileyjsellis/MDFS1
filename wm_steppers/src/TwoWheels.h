@@ -11,7 +11,7 @@ class TwoWheels {
   void spinLeft();
   void spinRight();
 
-  void turnRight(int turningRadius);
+  void reverseRight(int turningRadius);
   void turnLeft(int turningRadius);
 
   void stop();
